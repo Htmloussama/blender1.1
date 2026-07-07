@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { collection, query, getDocs, doc, setDoc, deleteDoc, updateDoc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { Asset, Order } from "../types";
 import { Shield, Plus, Edit, Trash2, DollarSign, Download, Eye, FileBox, LayoutList, TrendingUp, Mail, LogIn, Sparkles, Box, Upload, Check, AlertTriangle } from "lucide-react";
@@ -83,10 +83,43 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     e.preventDefault();
     setLoginError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (signInErr: any) {
+        // If the admin user email does not exist yet (e.g. newly provisioned applet), let's automatically create it!
+        if (signInErr.code === "auth/user-not-found" || signInErr.message?.includes("user-not-found")) {
+          await createUserWithEmailAndPassword(auth, email, password);
+        } else {
+          throw signInErr;
+        }
+      }
     } catch (err: any) {
       console.error("Auth error:", err);
-      setLoginError(err.message || "Invalid email or master password credentials.");
+      let errMsg = "Invalid email or master password credentials.";
+      if (err.code === "auth/weak-password") {
+        errMsg = "Password must be at least 6 characters long.";
+      } else if (err.code === "auth/invalid-email") {
+        errMsg = "Invalid email address format.";
+      } else if (err.code === "auth/wrong-password") {
+        errMsg = "Wrong password for this seller account.";
+      } else if (err.message) {
+        errMsg = err.message;
+      }
+      setLoginError(errMsg);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoginError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      if (result.user && result.user.email !== "bitcoinoussama3@gmail.com") {
+        setLoginError("Authorized admin/seller email must be 'bitcoinoussama3@gmail.com'. Signed in with non-admin Google account.");
+      }
+    } catch (err: any) {
+      console.error("Google sign in failed:", err);
+      setLoginError(err.message || "Google sign in was aborted or failed.");
     }
   };
 
@@ -259,7 +292,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
+             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-2">
                   Seller Email
@@ -281,11 +314,14 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                 <input
                   type="password"
                   required
-                  placeholder="••••••••"
+                  placeholder="Choose any password to auto-create"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-zinc-900 border border-zinc-800 focus:border-violet-500/30 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none font-mono"
                 />
+                <p className="text-[10px] text-zinc-500 font-mono mt-2 leading-relaxed">
+                  💡 <strong>First Time Logging In?</strong> Type your email <strong>bitcoinoussama3@gmail.com</strong> and choose ANY password (6+ chars). The application will automatically instantiate your secure admin account!
+                </p>
               </div>
 
               {loginError && (
@@ -296,10 +332,30 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
               <button
                 type="submit"
-                className="w-full py-4 mt-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-mono text-xs uppercase tracking-wider font-semibold transition-all shadow-[0_4px_20px_rgba(139,92,246,0.2)] flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-4 mt-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-mono text-xs uppercase tracking-wider font-semibold transition-all shadow-[0_4px_20px_rgba(139,92,246,0.2)] flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />
                 Authenticate Console
+              </button>
+
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-white/5"></div>
+                <span className="flex-shrink mx-4 text-[10px] font-mono text-zinc-600 uppercase">Or</span>
+                <div className="flex-grow border-t border-white/5"></div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                className="w-full py-3 rounded-xl bg-zinc-950 border border-white/10 hover:border-violet-500/30 text-zinc-300 font-mono text-xs font-medium transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Sign in with Google
               </button>
             </form>
 

@@ -39,6 +39,15 @@ export default function Navbar({ currentView, onNavigate }: NavbarProps) {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error("Google login failed:", err);
+    }
+  };
+
   const isAdmin = user && user.email === "bitcoinoussama3@gmail.com";
 
   return (
@@ -184,7 +193,7 @@ export default function Navbar({ currentView, onNavigate }: NavbarProps) {
               </div>
             ) : (
               <button
-                onClick={() => onNavigate("login")}
+                onClick={handleGoogleLogin}
                 className="px-4 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-mono font-medium tracking-wider uppercase transition-all shadow-[0_4px_20px_rgba(139,92,246,0.3)] hover:shadow-[0_4px_25px_rgba(139,92,246,0.5)] cursor-pointer"
                 id="nav-login-btn"
               >
