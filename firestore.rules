@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper to check if user is the admin
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == "bitcoinoussama3@gmail.com";
+    }
+
+    match /assets/{assetId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow create: if true; // Anyone can initiate or submit order logs during purchase
+      allow read: if isAdmin() || (request.auth != null && resource.data.buyerEmail == request.auth.token.email);
+      allow update, delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "Asset": {
+      "title": "Asset",
+      "description": "A Blender 3D model/asset listed in the marketplace",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique asset ID" },
+        "title": { "type": "string", "description": "Title of the 3D design" },
+        "description": { "type": "string", "description": "Markdown or plaintext description of the design" },
+        "price": { "type": "number", "description": "Price in USD. 0 means Free" },
+        "category": { "type": "string", "description": "Asset category, e.g., Characters, Props, Environments, Vehicles" },
+        "imageUrls": { "type": "array", "description": "List of uploaded product image paths (hosted on server or empty)" },
+        "fileUrl": { "type": "string", "description": "Path on the server to the uploaded .blend asset file" },
+        "fileName": { "type": "string", "description": "Original name of the .blend asset file" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Asset creation timestamp" },
+        "downloadsCount": { "type": "number", "description": "Total count of downloads" },
+        "viewsCount": { "type": "number", "description": "Total count of views" }
+      },
+      "required": ["title", "description", "price", "category", "imageUrls", "fileUrl", "fileName", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "An order representing a purchase of a paid asset or a free checkout download log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Stripe Session ID or generated Transaction ID" },
+        "buyerEmail": { "type": "string", "description": "Email address of the buyer" },
+        "assetId": { "type": "string", "description": "Reference to the purchased Asset ID" },
+        "assetTitle": { "type": "string", "description": "Snapshot of purchased asset's title" },
+        "pricePaid": { "type": "number", "description": "Price paid for the transaction" },
+        "status": { "type": "string", "description": "Payment or transaction status: pending, completed, failed" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Transaction creation timestamp" }
+      },
+      "required": ["buyerEmail", "assetId", "assetTitle", "pricePaid", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/assets/{assetId}": {
+      "schema": "Asset",
+      "description": "Collection of Blender 3D assets"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Collection of asset transactions and downloads"
+    }
+  }
+}

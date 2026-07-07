@@ -1,0 +1,6 @@
+{
+  "name": "Blender Asset Marketplace",
+  "description": "A premium, motion-driven 3D asset marketplace for Blender designers to list, sell, and download .blend assets with integrated Stripe Checkout.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
